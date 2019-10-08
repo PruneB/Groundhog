@@ -1,0 +1,145 @@
+#!/usr/bin/python3
+
+import sys
+import math
+
+oui = []
+stop = ""
+rList = []
+g = 0
+r = 0
+s = 0
+index = 0
+tendency = 0
+weirdestValue = 0
+
+
+def gCalcul(oui, period, index):
+    add = 0
+    tmp = 0
+    indexB = index
+
+    if oui[index] == "STOP":
+        return
+    while indexB != index - period:
+        if oui[indexB] > oui[indexB - 1]:
+            add = oui[indexB] - oui[indexB - 1]
+            tmp += add
+        indexB -= 1
+    g = tmp / period
+    return g
+
+
+def rCalcul(oui, period, index):
+    add = 0
+    if oui[index] == "STOP":
+        return
+    add = (oui[index] - oui[index - period]) / (oui[index - period])
+    r = add * 100
+    return r
+
+
+def rLCalcul(oui, period, index):
+    add = 0
+    if oui[index] == "STOP":
+        return
+    add = (oui[index] - oui[index - period]) / (oui[index - period])
+    r = add * 100
+    rList.append(round(r))
+    return r
+
+
+def average(oui, period):
+    s = sum(oui[-period:]) / period
+    return s
+
+
+def variance(oui, period):
+    tmp = average(oui, period)
+    return average([(x - tmp) ** 2 for x in oui], period)
+
+
+def sCalcul(oui, period):
+    s = variance(oui, period)
+    return math.sqrt(s)
+
+
+def wierdestFunction(oui, period):
+    test = average(oui, period)
+    sup = test + 2.2 * sCalcul(oui, period)
+    low = test - 2.2 * sCalcul(oui, period)
+
+    firstPeriod = len(oui) - period
+
+    weirdestValue = [(x - low) / (sup - low) for x in oui[-firstPeriod:]]
+    print(weirdestValue)
+    return weirdestValue
+
+
+def isNeg(rList):
+    rBool = False
+
+    if len(rList) > 2:
+        newRList = rList[-2:]
+        if newRList[0] > 0:
+            if newRList[1] < 0:
+                rBool = True
+        if newRList[0] < 0:
+            if newRList[1] > 0:
+                rBool = True
+
+    return rBool
+
+
+for arg in sys.argv:
+    1
+period = arg
+
+if period == "-h":
+    print("SYNOPSIS")
+    print("    ./groundhog period")
+    print("")
+    print("DESCRIPTION")
+    print("    period         the number of days defining a period")
+    exit(0)
+
+try:
+    while stop != "STOP":
+        stop = input()
+        if stop == "STOP":
+            if index < int(period):
+                exit(84)
+            print("Global tendency switched %d times" % tendency)
+
+            break
+        oui.append(float(stop))
+        if index != 0:
+            if index % int(period) == 0:
+                g = gCalcul(oui, int(period), index)
+                r = rCalcul(oui, int(period), index)
+            if index - int(period) > 0:
+                g = gCalcul(oui, int(period), index)
+                r = rLCalcul(oui, int(period), index)
+            if index >= int(period) - 1:
+                s = sCalcul(oui, int(period))
+
+        if g == 0:
+            print("g=nan", end="")
+        else:
+            print("g=%.2f" % g, end="")
+        if r == 0:
+            print("    r=nan%", end="")
+        else:
+            print("    r=%d%%" % round(r), end="")
+        if s == 0:
+            print("    s=nan", end="")
+        else:
+            print("    s=%.2f" % s, end="")
+        if isNeg(rList) == True:
+            print("    a switch occurs", end="")
+            tendency += 1
+        print("")
+        index += 1
+except:
+    exit(84)
+
